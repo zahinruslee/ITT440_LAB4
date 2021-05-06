@@ -1,73 +1,76 @@
+#include<netdb.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<sys/socket.h>
+#include<arpa/inet.h>	//inet_addr
 #include<unistd.h>
-#include<arpa/inet.h>
-#include <stdio.h> 
-#include <netdb.h> 
-#include <netinet/in.h> 
-#include <stdlib.h> 
-#include <string.h> 
-#include <sys/socket.h> 
-#include <sys/types.h> 
-#include <signal.h>
 
-// function for chat
-void func(int sockfd) 
-{ 
-	char buff[80]; 
-	int n; 
-	for (;;) { 
-		bzero(buff, sizeof(buff)); 
-		printf("YOU   : "); 
-		n = 0; 
-		while ((buff[n++] = getchar()) != '\n'); 
-		write(sockfd, buff, sizeof(buff)); 
-		bzero(buff, sizeof(buff)); 
-		read(sockfd, buff, sizeof(buff)); 
-		printf("Server: %s", buff); 
-		if ((strncmp(buff, "exit", 4)) == 0) { 
-			printf("\nClient Exiting...\n"); 
-			printf("SEMBANG LEBAT\n\n"); 
-			break; 
-		} 
-		
-	} 
-} 
+void func(int socket_desc)
+{
+	char buff[80];
+	int n;
+	for (;;)
+	{
+		bzero(buff, sizeof(buff));
+		printf("Enter message: ");
+		n = 0;
+		while ((buff[n++] = getchar()) != '\n');
 
-int main() 
-{ 
-	int sockfd, connfd; 
-	struct sockaddr_in servaddr, cli; 
-
-	// socket create and varification 
-	sockfd = socket(AF_INET, SOCK_STREAM, 0); 
-	if (sockfd == -1) { 
-		printf("Socket creation failed.\n"); 
-		exit(0); 
-	} 
-	else
-		printf("Socket successfully created.\n"); 
-	bzero(&servaddr, sizeof(servaddr)); 
-
-	// assign IP, PORT 
-	printf("Enter IP address of server (default: 192.168.1.10)\n>>> ");
-	char ipserver[20];
-	scanf("%s", ipserver);
-	servaddr.sin_family = AF_INET;  
-	servaddr.sin_addr.s_addr = inet_addr(ipserver); 
-	servaddr.sin_port = htons(8888); 
-
-	// connect the client socket to server socket 
-	if (connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) != 0) { 
-		printf("Connection with the server failed.\n"); 
-		exit(0); 
-	} 
-	else {
-		printf("Connected to the server. Waiting for a response...\nPress [CTRL + C] to quit anytime\n\nSEMBANG LEBAT\n"); 
+		write(socket_desc, buff, sizeof(buff));
+		bzero(buff, sizeof(buff));
+		read(socket_desc, buff, sizeof(buff));
+		printf("From Server : %s", buff);
+		if ((strncmp(buff, "exit", 4)) == 0)
+		{
+			printf("Client exit...\n");
+		break;
+		}
 	}
+}
+
+int main()
+{
+	int socket_desc, conn;
+	struct sockaddr_in server, client; 
+//        char *message = malloc (100), server_reply[6000];
 	
-	// function for chat 
-	func(sockfd); 
+	//Create socket 
+	socket_desc = socket(AF_INET , SOCK_STREAM , 0);
+	if (socket_desc == -1)
+	{
+		printf("Could not create socket...\n");
+		exit(0);
+	}
+	else
+		printf("Socket successfully created...\n");
+	bzero(&server, sizeof(server));
 
-	// close the socket 
-	close(sockfd); 
+//	fd = socket(AF_INET, SOCK_STREAM, 0);
+	//Assign IP, PORT
+	server.sin_family = AF_INET;
+	server.sin_port = htons(8888);
+	server.sin_addr.s_addr = inet_addr("192.168.56.103");
+//	inet_pton(AF_INET, "192.168.0.135", &server.sin_addr); //This binds the client to localhost
+//	connect(fd, (struct sockaddr *)&server, sizeof(server)); //This connects the client to the server.
 
-} 
+	
+
+	//Connect client socket to server socket
+	if (connect(socket_desc , (struct sockaddr *)&server, sizeof(server)) !=0)
+	{
+		printf("Connection with server failed...\n");
+		exit(0);
+	}
+
+	else
+		printf("Connected to the server...\n");
+
+	
+	//Func for chat
+	func(socket_desc);
+
+	//Close socket
+	close(socket_desc);
+
+}
